@@ -34,11 +34,11 @@ def getTwitterSubscription():
 		account_ids.update(subs.keys())
 	return account_ids
 
-def getSubscribers(tid):
+def getSubscribers(tuid):
 	# if this bot does grow larger, we will need a relational db.
 	chat_ids = set()
 	for chat_id, subs in SUBSCRIPTION:
-		if tid in subs:
+		if tuid in subs:
 			chat_ids.add(chat_id)
 	return chat_ids
 
@@ -62,17 +62,17 @@ def exportImp(msg, bot):
 	if not 'subscribe' in command:
 		msg.reply_text(START_MESSAGE, quote=False)
 		return
-	tid, desc = getTwitterId(link)
-	if not tid:
+	tuid, desc = getTwitterId(link)
+	if not tuid:
 		return
 	subs = SUBSCRIPTION[str(msg.chat_id)]
 	if 'unsubscribe' in command:
-		if not subs or tid not in subs:
+		if not subs or tuid not in subs:
 			return msg.reply_text('FAIL. No such subscription', quote=False)
-		del subs[tid]
+		del subs[tuid]
 		updateSubInfo(msg, bot)
 		return
-	subs[tid] = desc
+	subs[tuid] = desc
 	updateSubInfo(msg, bot)
 	return
 
@@ -99,57 +99,29 @@ dp = updater.dispatcher
 dp.add_handler(MessageHandler(Filters.command, export))
 dp.add_handler(MessageHandler(Filters.private, start))
 
+def getTContent(data):
+	if data['truncated']:
+        return data['extended_tweet']['full_text']
+    else:
+        return data['text']
+
+def getContent(data):
+    if data['retweeted_status']:
+    	return getTContent(data['retweeted_status'])
+    else:
+    	return getTContent(data)
+
 class TwitterListener(tweepy.StreamListener):
     def on_data(self, data):
         tweet_data = json.loads(data)
         if tweet_data['in_reply_to_status_id_str']:
             return
-        tid = tweet_data['user']['id_str']
-        chat_ids = getSubscribers(tid)
+        tuid = tweet_data['user']['id_str']
+        chat_ids = getSubscribers(tuid)
         if not chat_ids:
         	return
-        if user_id in accountIds:
-            user_screenname = tweet_data['user']['screen_name']
-            tweet_id = tweet_data['id_str']
-            # 获取tweet内容
-            tweet_content = ''
-            if tweet_data['truncated']:
-                tweet_content = tweet_data['extended_tweet']['full_text']
-            else:
-                tweet_content = tweet_data['text']
-            # 推送这个推特链接到telegram频道
-            tweet_link = 'https://twitter.com/' + user_screenname + '/status/' + tweet_id
-            is_retweet = False
-            try:
-                if tweet_data['retweeted_status']:
-                    is_retweet = True
-                    tweet_id = tweet_data['retweeted_status']['id_str']
-                    user_screenname = tweet_data['retweeted_status']['user']['screen_name']
-                    tweet_link = 'https://twitter.com/' + user_screenname + '/status/' + tweet_id
-                    if tweet_data['retweeted_status']['truncated']:
-                        tweet_content = '(' + tweet_data['user']['name'] + ' 转) ' + tweet_data['retweeted_status']['extended_tweet']['full_text']
-                    else:
-                        tweet_content = '(' + tweet_data['user']['name'] + ' 转) ' + tweet_data['retweeted_status']['text']
-
-            except Exception as e:
-                print(e)
-                pass
-
-            # 去除内容中的链接
-            # tweet_content = re.sub(r"http\S+", "", tweet_content)
-            # tweet_content = re.sub(r"RT +@[^ :+]+:?", "", tweet_content)
-            tweet_content_size = getsizeof(tweet_content)
-            # print(tweet_content)
-            message = tweet_content + "\n" + tweet_link
-            if tweet_content_size <= 180:
-                if is_retweet:
-                    message = '(' + tweet_data['user']['name'] + ' 转)' + " \n" + tweet_link
-                else:
-                    message = tweet_link
-            # 请私聊我获取{{bot_token}}
-            # print(tweet_data)
-            # print(message)
-            requests.post("https://api.telegram.org/{{bot_token}}/sendMessage", data={'chat_id': '@tweet_push', 'text': message, 'disable_web_page_preview': False})
+        for chat_id in chat_ids:
+        	updater.bot.send_message(chat_id=chat_id, text=getContent(tweet_data))
 
 def twitter_push(updater):
 	while True:
