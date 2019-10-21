@@ -2,6 +2,8 @@ import os
 import sys
 import json
 
+REQUIRED_KEYS = set(['bot_token', 'twitter_consumer_key', 'twitter_consumer_secret', 'twitter_access_token', 'twitter_access_secret'])
+
 def setup(is_reload = False):
 	RUN_COMMAND = 'nohup python3 twitter_subscription_bot.py &'
 
@@ -12,9 +14,10 @@ def setup(is_reload = False):
 	except:
 		pass
 
-	if not CREDENTIALS['bot_token'] or not CREDENTIALS['twitter_token']:
-		print('ERROR: please fill the CREDENTIALS file in json format, with bot_token and twitter_token.')
-		return
+	for key in REQUIRED_KEYS:
+		if key not in CREDENTIALS:
+			print('ERROR: please fill the CREDENTIALS file in json format, required keys : ' + ', '.join(sorted(REQUIRED_KEYS)))
+			return
 
 	if not is_reload:
 		os.system('curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py')

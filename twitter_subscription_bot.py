@@ -4,39 +4,35 @@
 from telegram.ext import Updater, MessageHandler, Filters
 
 import requests
-from bs4 import BeautifulSoup
 import traceback as tb
-import time
+import json
+import tweepy
+import threading
 
 DEBUG_GROUP = -1001198682178  # @bot_debug
-START_MESSAGE = ('Send link to the bot using command: `/export_youtube_playlist'
-								 ' playlist_link`. If you do this inside group/channel, please '
+START_MESSAGE = ('Command: `/subscribe_twitter twitter_user_link`. If you do this inside group/channel, please '
 								 'add this bot as admin.')
-SLEEP_TIME = 10  # unit: second
 
 
-def linkFormat(link):
-	if '://' not in link:
-		return 'https://' + link
-	return link
+with open('CREDENTIALS') as f:
+	CREDENTIALS = json.load(f)
 
+def loadSubscription():
+	try:
+		with open('SUBSCRIPTION') as f:
+			SUBSCRIPTION = json.load(f)
+	except:
+		SUBSCRIPTION = {}
+
+def saveSubscription():
+	with open('SUBSCRIPTION', 'w') as f:
+		f.write(json.dump(SUBSCRIPTION))
 
 def trimURL(link):
 	if '://' not in link:
 		return link
 	loc = link.find('://')
 	return link[loc + 3:]
-
-
-def getVideoList(soup):
-	table = soup.find('table', id='pl-video-table')
-
-	for a in table.find_all('a', class_='pl-video-title-link'):
-		href = a['href']
-		href = href[:href.find('&')]
-		url = 'www.youtube.com' + href
-		yield url
-
 
 def setInfo(msg, bot, link, soup):
 	try:
@@ -57,18 +53,9 @@ def setInfo(msg, bot, link, soup):
 
 
 def exportImp(msg, bot):
-	link = linkFormat(msg.text.split()[1])
-	r = requests.get(link)
-	soup = BeautifulSoup(r.text, 'html.parser')
-	result = list(getVideoList(soup))
-	if len(result) == 0:
-		msg.reply_text('Can not find any video', quote=False)
-		msg.delete()
-	setInfo(msg, bot, link, soup)
-	for url in result:
-		msg.reply_text(url, quote=False)
-		time.sleep(SLEEP_TIME)
-	msg.delete()
+	command, link = msg.text.split()
+	if 'unsubscribe' in command:
+
 
 
 def export(update, context):
@@ -89,15 +76,34 @@ def start(update, context):
 		print(e)
 		tb.print_exc()
 
-
-with open('TOKEN') as f:
-	TOKEN = f.readline().strip()
-
-updater = Updater(TOKEN, use_context=True)
+updater = Updater(CREDENTIALS['bot_token'], use_context=True)
 dp = updater.dispatcher
 
 dp.add_handler(MessageHandler(Filters.command, export))
 dp.add_handler(MessageHandler(Filters.private, start))
 
-updater.start_polling()
-updater.idle()
+def telebot_poll(updater):
+	updater.start_polling()
+	updater.idle()
+
+t1 = threading.Thread(target=telebot_poll, arg=(updater,))
+t1.start()
+
+def twitter_push(updater):
+	while True:
+	    try:
+	        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+	        auth.set_access_token(access_token, access_token_secret)
+	        api = tweepy.API(auth)
+	        print('start a new connection')
+	        myStreamListener = MyStreamListener()
+	        myStream = tweepy.Stream(auth=api.auth, listener=myStreamListener)
+	        # 实时监测我们关注的这些推特自媒体账号
+	        myStream.filter(follow=accountIds)
+	    except Exception as e: #抓取到一段时间都会断开连接,睡眠一段时间再重新连接
+	        time.sleep(251)
+	        print(e)
+
+t2 = threading.Thread(target=twitter_push, arg=(updater,))
+t2.start()
+
