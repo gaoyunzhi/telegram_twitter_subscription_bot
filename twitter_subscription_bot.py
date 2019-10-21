@@ -28,7 +28,6 @@ def saveSubscription():
 		f.write(json.dumps(SUBSCRIPTION, sort_keys=True, indent=2))
 
 def getTwitterSubscription():
-	print(SUBSCRIPTION)
 	account_ids = set()
 	for subs in SUBSCRIPTION.values():
 		account_ids.update(subs.keys())
@@ -49,21 +48,27 @@ def getTContent(data):
 		return data['text']
 
 def getContent(data):
-	if data['retweeted_status']:
+	if 'retweeted_status' in data:
 		return getTContent(data['retweeted_status'])
 	else:
 		return getTContent(data)
 
 class TwitterListener(tweepy.StreamListener):
 	def on_data(self, data):
+		print('here')
+		print(str(data))
 		tweet_data = json.loads(data)
-		if tweet_data['in_reply_to_status_id_str']:
+		if 'in_reply_to_status_id_str' in tweet_data:
 			return
 		tuid = tweet_data['user']['id_str']
 		chat_ids = getSubscribers(tuid)
+		print('chat_ids')
+		print(chat_ids)
 		if not chat_ids:
 			return
 		for chat_id in chat_ids:
+			print('getContent(tweet_data)')
+			print(getContent(tweet_data))
 			updater.bot.send_message(chat_id=chat_id, text=getContent(tweet_data))
 
 def twitterPushImp():
@@ -107,6 +112,8 @@ def exportImp(msg, bot):
 		del subs[tuid]
 		updateSubInfo(msg, bot)
 		return
+	if tuid in subs:
+		return msg.reply_text('FAIL. Already subscribed', quote=False)
 	subs[tuid] = desc
 	updateSubInfo(msg, bot)
 	return
