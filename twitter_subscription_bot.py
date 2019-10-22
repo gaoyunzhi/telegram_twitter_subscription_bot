@@ -114,6 +114,7 @@ class TwitterListener(tweepy.StreamListener):
 			with open('tmp3', 'w') as f:
 				f.write(str(tweet_data))
 			content = getContent(tweet_data)
+			print('content=' + content)
 			url_info = getUrlInfo(tweet_data)
 			key_suffix = getKey(content, url_info)
 			print('key_suffix=' + key_suffix)
