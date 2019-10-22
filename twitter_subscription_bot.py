@@ -55,11 +55,32 @@ def getContent(data):
 	else:
 		return getTContent(data)
 
-def getKey(content):
+def getUrlInfo(tweet_data):
+	r = {}
+	for url in tweet_data.get('entities', {}).get('urls', []):
+		r[url['url']] = url['display_url']
+	return r
+
+def getKey(content, url_info):
 	for piece in content.split():
-		if 'http' in piece or 'www' in piece:
-			return piece
+		if 'http' in piece or 't.co' in piece and piece in url_info:
+			return url_info[piece]
 	return content[:20]
+
+def formatContent(content, url_info):
+	for piece in content.split():
+		if 'http' not in piece and 't.co' not in piece:
+			continue
+		if piece not in url_info:
+			content = content.replace(piece, '')
+			continue
+		real_url = url_info[piece]
+		if 'photo' in real_url.split('/'):
+			content = content.replace(piece, '')
+			continue
+		if len(real_url) < len(piece) + 10:
+			content = content.replace(piece, real_url)
+	return content
 
 class TwitterListener(tweepy.StreamListener):
 	def on_data(self, data):
@@ -68,7 +89,8 @@ class TwitterListener(tweepy.StreamListener):
 			tweet_data = json.loads(data)
 			with open('tmp', 'w') as f:
 				f.write(str(tweet_data))
-			if tweet_data.get('in_reply_to_status_id_str') or not tweet_data.get('user'):
+			if tweet_data.get('in_reply_to_status_id_str') or not tweet_data.get('user') or \
+				tweet_data.get('quoted_status'):
 				return
 			with open('tmp2', 'w') as f:
 				f.write(str(tweet_data))
@@ -79,9 +101,12 @@ class TwitterListener(tweepy.StreamListener):
 			with open('tmp3', 'w') as f:
 				f.write(str(tweet_data))
 			content = getContent(tweet_data)
+			url_info = getUrlInfo(tweet_data)
+			key_suffix = getKey(content, url_info)
+			content = tweet_data['user']['name'] + ' | ' + formatContent(content, url_info)
 			for chat_id in chat_ids:
-				key = str(chat_id) + getKey(content)
-				r = updater.bot.send_message(chat_id=chat_id, text=tweet_data['user']['name'] + ' | ' + content)
+				key = str(chat_id) + key_suffix
+				r = updater.bot.send_message(chat_id=chat_id, text=content)
 				if key in record:
 					updater.bot.delete_message(chat_id=chat_id, message_id=record[key])
 				record[key] = r['message_id']
