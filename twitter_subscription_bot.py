@@ -58,7 +58,7 @@ def getUrlInfo(tweet_data):
 	r = {}
 	url_data = tweet_data.get('entities', {}).get('urls', []) + \
 		tweet_data.get('retweeted_status', {}).get('entities', {}).get('urls', []) + \
-		tweet_data.get('extended_tweet', {}).get('entities', {}).get('urls', []) + 
+		tweet_data.get('extended_tweet', {}).get('entities', {}).get('urls', []) + \
 		tweet_data.get('retweeted_status', {}).get('extended_tweet', {}).get('entities', {}).get('urls', [])
 	for url in url_data:
 		r[url['url']] = url['expanded_url']
@@ -118,12 +118,8 @@ class TwitterListener(tweepy.StreamListener):
 			with open('tmp3', 'w') as f:
 				f.write(str(tweet_data))
 			content = getContent(tweet_data)
-			print('content=' + content)
 			url_info = getUrlInfo(tweet_data)
-			print('url_info=' + str(url_info))
 			key_suffix = getKey(content, url_info)
-			print('key_suffix=' + key_suffix)
-			print(record)
 			content = tweet_data['user']['name'] + ' | ' + formatContent(content, url_info)
 			for chat_id in chat_ids:
 				key = str(chat_id) + key_suffix
