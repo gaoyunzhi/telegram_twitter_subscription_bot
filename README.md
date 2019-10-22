@@ -37,6 +37,7 @@ Github: https://github.com/gaoyunzhi/telegram_twitter_subscription_bot
 ## bot commands
 
 subscribe_twitter - '/subscribe_twitter twitter_user_link'
+
 unsubscribe_twitter - '/unsubscribe_twitter twitter_user_link'
 
 ## bot about 

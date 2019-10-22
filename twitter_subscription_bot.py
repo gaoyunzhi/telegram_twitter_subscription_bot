@@ -119,7 +119,10 @@ def getTwitterUser(link):
 	user = twitterApi.get_user(screenname)
 	return str(user.id), '[' + user.name + '](twitter.com/' + str(user.screen_name) + ')'
 
-def exportImp(msg, bot):
+def manageImp(msg, bot):
+	if len(msg.text.split()) != 2:
+		msg.reply_text(START_MESSAGE, quote=False)
+		return
 	command, link = msg.text.split()
 	if not 'subscribe' in command:
 		msg.reply_text(START_MESSAGE, quote=False)
@@ -141,11 +144,11 @@ def exportImp(msg, bot):
 	updateSubInfo(msg, bot)
 	return
 
-def export(update, context):
+def manage(update, context):
 	try:
 		if 'start' in update.effective_message.text:
 			return update.effective_message.reply_text(START_MESSAGE, quote=False)
-		exportImp(update.effective_message, context.bot)
+		manageImp(update.effective_message, context.bot)
 	except Exception as e:
 		print(e)
 		tb.print_exc()
@@ -161,7 +164,7 @@ def start(update, context):
 updater = Updater(CREDENTIALS['bot_token'], use_context=True)
 dp = updater.dispatcher
 
-dp.add_handler(MessageHandler(Filters.command, export))
+dp.add_handler(MessageHandler(Filters.command, manage))
 dp.add_handler(MessageHandler(Filters.private, start))
 
 def twitterPush():
