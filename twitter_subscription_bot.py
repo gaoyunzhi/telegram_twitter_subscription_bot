@@ -20,7 +20,7 @@ record = {}
 with open('CREDENTIALS') as f:
 	CREDENTIALS = json.load(f)
 
-export_to_telegraph.token = CREDENTIALS['telegraph']
+export_to_telegraph.token = CREDENTIALS.get('telegraph')
 
 try:
 	with open('SUBSCRIPTION') as f:
