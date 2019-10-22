@@ -16,6 +16,8 @@ START_MESSAGE = ('Command: `/subscribe_twitter twitter_user_link`. If you do thi
 STOP_ERROR_CODE = 'i_want_to_stop'
 twitterStream = None
 
+record = {}
+
 with open('CREDENTIALS') as f:
 	CREDENTIALS = json.load(f)
 
@@ -55,6 +57,12 @@ def getContent(data):
 	else:
 		return getTContent(data)
 
+def getKey(content):
+	for piece in content.split():
+		if 'http' in piece or 'www' in piece:
+			return piece
+	return content[:20]
+
 class TwitterListener(tweepy.StreamListener):
 	def on_data(self, data):
 		try:
@@ -67,8 +75,13 @@ class TwitterListener(tweepy.StreamListener):
 			chat_ids = getSubscribers(tuid)
 			if not chat_ids:
 				return
+			content = getContent(tweet_data)
 			for chat_id in chat_ids:
-				updater.bot.send_message(chat_id=chat_id, text=tweet_data['user']['name'] + ' | ' + getContent(tweet_data))
+				key = str(chat_id) + getKey(content)
+				r = updater.bot.send_message(chat_id=chat_id, text=tweet_data['user']['name'] + ' | ' + content)
+				if key in record:
+					updater.bot.delete_message(chat_id=chat_id, message_id=record[key])
+				record[key] = r['message_id']
 		except Exception as e:
 			print(e)
 			tb.print_exc()
