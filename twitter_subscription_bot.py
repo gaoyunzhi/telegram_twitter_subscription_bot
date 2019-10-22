@@ -46,17 +46,13 @@ def getSubscribers(tuid):
 			chat_ids.add(chat_id)
 	return chat_ids
 
-def getTContent(data):
-	if data['truncated']:
-		return data['extended_tweet']['full_text']
-	else:
-		return data['text']
-
 def getContent(data):
+	main_data = data
 	if data.get('retweeted_status'):
-		return getTContent(data['retweeted_status'])
-	else:
-		return getTContent(data)
+		main_data = data['retweeted_status']
+	if data['truncated']:
+		return main_data['full_text']
+	return main_data['text']
 
 def getUrlInfo(tweet_data):
 	r = {}
@@ -120,6 +116,8 @@ class TwitterListener(tweepy.StreamListener):
 			content = getContent(tweet_data)
 			url_info = getUrlInfo(tweet_data)
 			key_suffix = getKey(content, url_info)
+			print('key_suffix=' + key_suffix)
+			print(record)
 			content = tweet_data['user']['name'] + ' | ' + formatContent(content, url_info)
 			for chat_id in chat_ids:
 				key = str(chat_id) + key_suffix
