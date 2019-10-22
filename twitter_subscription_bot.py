@@ -64,15 +64,23 @@ def getUrlInfo(tweet_data):
 		r[url['url']] = url['display_url']
 	return r
 
+def trimUrl(url):
+	if '://' not in url:
+		return url
+	return url[url.find('://') + 3:]
+
+def isUrlPiece(piece):
+	return 'http' in piece or 't.co' in piece or '://' in piece
+
 def getKey(content, url_info):
 	for piece in content.split():
-		if 'http' in piece or 't.co' in piece and piece in url_info:
+		if isUrlPiece(piece) and piece in url_info:
 			return url_info[piece]
 	return content[:20]
 
 def formatContent(content, url_info):
 	for piece in content.split():
-		if 'http' not in piece and 't.co' not in piece:
+		if not isUrlPiece(piece):
 			continue
 		if piece not in url_info:
 			content = content.replace(piece, '')
@@ -84,8 +92,11 @@ def formatContent(content, url_info):
 		telegraph_url = export_to_telegraph.export(real_url)
 		if telegraph_url:
 			content = content.replace(piece, telegraph_url)
+			continue
 		if len(real_url) < len(piece) + 10:
 			content = content.replace(piece, real_url)
+			continue
+		content = content.replace(piece, trimUrl(piece))
 	return content
 
 class TwitterListener(tweepy.StreamListener):
