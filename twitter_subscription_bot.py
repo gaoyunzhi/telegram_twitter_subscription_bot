@@ -13,6 +13,8 @@ import time
 START_MESSAGE = ('Command: `/subscribe_twitter twitter_user_link`. If you do this inside group/channel, please '
 								 'add this bot as admin.')
 
+STOP_ERROR_CODE = 'i_want_to_stop'
+twitterStream = None
 
 with open('CREDENTIALS') as f:
 	CREDENTIALS = json.load(f)
@@ -48,43 +50,51 @@ def getTContent(data):
 		return data['text']
 
 def getContent(data):
-	if 'retweeted_status' in data:
+	if data.get('retweeted_status'):
 		return getTContent(data['retweeted_status'])
 	else:
 		return getTContent(data)
 
 class TwitterListener(tweepy.StreamListener):
 	def on_data(self, data):
-		print('here')
-		print(str(data))
-		tweet_data = json.loads(data)
-		if 'in_reply_to_status_id_str' in tweet_data:
-			return
-		tuid = tweet_data['user']['id_str']
-		chat_ids = getSubscribers(tuid)
-		print('chat_ids')
-		print(chat_ids)
-		if not chat_ids:
-			return
-		for chat_id in chat_ids:
-			print('getContent(tweet_data)')
-			print(getContent(tweet_data))
-			updater.bot.send_message(chat_id=chat_id, text=getContent(tweet_data))
+		try:
+			tweet_data = json.loads(data)
+			with open('tmp', 'w') as f:
+				f.write(str(tweet_data))
+			if tweet_data.get('in_reply_to_status_id_str') or not tweet_data.get('user'):
+				return
+			tuid = tweet_data['user']['id_str']
+			chat_ids = getSubscribers(tuid)
+			if not chat_ids:
+				return
+			for chat_id in chat_ids:
+				updater.bot.send_message(chat_id=chat_id, text=tweet_data['user']['name'] + ' | ' + getContent(tweet_data))
+		except Exception as e:
+			print(e)
+			tb.print_exc()
+
+	def on_error(self, status_code):
+		if status_code == STOP_ERROR_CODE:
+			# restart the listener when need to refresh the subscription
+			return False
 
 def twitterPushImp():
 	global twitterApi
 	global twitterStream
+	global twitterListener
 	auth = tweepy.OAuthHandler(CREDENTIALS['twitter_consumer_key'], CREDENTIALS['twitter_consumer_secret'])
 	auth.set_access_token(CREDENTIALS['twitter_access_token'], CREDENTIALS['twitter_access_secret'])
 	twitterApi = tweepy.API(auth)
 	twitterListener = TwitterListener()
 	twitterStream = tweepy.Stream(auth=twitterApi.auth, listener=twitterListener)
+	print('loading/reloading twitter subscription')
 	twitterStream.filter(follow=getTwitterSubscription())
 
 def updateSubInfo(msg, bot):
 	try:
 		saveSubscription()
-		twitterPushImp()
+		if twitterListener:
+			twitterListener.on_error(STOP_ERROR_CODE)
 		info = 'Twitter Subscription List: \n' +  '\n'.join(sorted(SUBSCRIPTION[str(msg.chat_id)].values()))
 		msg.reply_text(info, quote=False, parse_mode='Markdown', disable_web_page_preview=True)
 	except Exception as e:
@@ -152,8 +162,6 @@ def twitterPush():
 
 t2 = threading.Thread(target=twitterPush)
 t2.start()
-
-twitterPushImp()
 
 updater.start_polling()
 updater.idle()
