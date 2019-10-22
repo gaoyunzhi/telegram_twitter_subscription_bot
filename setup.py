@@ -21,7 +21,7 @@ def setup(arg = ''):
 
 	if arg != 'reload' and arg != 'debug':
 		os.system('curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py')
-		os.system('python3 get-pip.py')
+		os.system('sudo python3 get-pip.py')
 		os.system('rm get-pip.py')
 
 		os.system('pip3 install -r requirements.txt')

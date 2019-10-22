@@ -8,6 +8,7 @@ import traceback as tb
 import json
 import tweepy
 import threading
+import export_to_telegraph
 
 START_MESSAGE = ('Command: `/subscribe_twitter twitter_user_link`. If you do this inside group/channel, please '
 								 'add this bot as admin.')
@@ -18,6 +19,8 @@ record = {}
 
 with open('CREDENTIALS') as f:
 	CREDENTIALS = json.load(f)
+
+export_to_telegraph.token = CREDENTIALS['telegraph']
 
 try:
 	with open('SUBSCRIPTION') as f:
@@ -78,6 +81,9 @@ def formatContent(content, url_info):
 		if 'photo' in real_url.split('/'):
 			content = content.replace(piece, '')
 			continue
+		telegraph_url = export_to_telegraph.export(real_url)
+		if telegraph_url:
+			content = content.replace(piece, telegraph_url)
 		if len(real_url) < len(piece) + 10:
 			content = content.replace(piece, real_url)
 	return content
