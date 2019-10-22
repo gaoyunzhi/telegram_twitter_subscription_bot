@@ -51,7 +51,7 @@ def getContent(data):
 	if data.get('retweeted_status'):
 		main_data = data['retweeted_status']
 	if data['truncated']:
-		return main_data['full_text']
+		return main_data['extended_tweet']['full_text']
 	return main_data['text']
 
 def getUrlInfo(tweet_data):
