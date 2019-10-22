@@ -56,9 +56,11 @@ def getContent(data):
 
 def getUrlInfo(tweet_data):
 	r = {}
-	for url in tweet_data.get('entities', {}).get('urls', []):
-		r[url['url']] = url['expanded_url']
-	for url in tweet_data.get('extended_tweet', {}).get('entities', {}).get('urls', []):
+	url_data = tweet_data.get('entities', {}).get('urls', []) + \
+		tweet_data.get('retweeted_status', {}).get('entities', {}).get('urls', []) + \
+		tweet_data.get('extended_tweet', {}).get('entities', {}).get('urls', []) + 
+		tweet_data.get('retweeted_status', {}).get('extended_tweet', {}).get('entities', {}).get('urls', [])
+	for url in url_data:
 		r[url['url']] = url['expanded_url']
 	return r
 
@@ -118,6 +120,7 @@ class TwitterListener(tweepy.StreamListener):
 			content = getContent(tweet_data)
 			print('content=' + content)
 			url_info = getUrlInfo(tweet_data)
+			print('url_info=' + str(url_info))
 			key_suffix = getKey(content, url_info)
 			print('key_suffix=' + key_suffix)
 			print(record)
