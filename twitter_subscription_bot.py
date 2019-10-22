@@ -71,10 +71,15 @@ class TwitterListener(tweepy.StreamListener):
 				f.write(str(tweet_data))
 			if tweet_data.get('in_reply_to_status_id_str') or not tweet_data.get('user'):
 				return
+			with open('tmp2', 'w') as f:
+				f.write(str(tweet_data))
 			tuid = tweet_data['user']['id_str']
+			print('here1')
 			chat_ids = getSubscribers(tuid)
 			if not chat_ids:
 				return
+			print('here2')
+			print(chat_ids)
 			content = getContent(tweet_data)
 			for chat_id in chat_ids:
 				key = str(chat_id) + getKey(content)
