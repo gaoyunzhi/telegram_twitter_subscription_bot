@@ -58,6 +58,8 @@ def getUrlInfo(tweet_data):
 	r = {}
 	for url in tweet_data.get('entities', {}).get('urls', []):
 		r[url['url']] = url['expanded_url']
+	for url in tweet_data.get('extended_tweet', {}).get('entities', {}).get('urls', []):
+		r[url['url']] = url['expanded_url']
 	return r
 
 def trimUrl(url):
