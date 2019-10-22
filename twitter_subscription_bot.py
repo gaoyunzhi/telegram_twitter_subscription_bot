@@ -61,7 +61,7 @@ def getContent(data):
 def getUrlInfo(tweet_data):
 	r = {}
 	for url in tweet_data.get('entities', {}).get('urls', []):
-		r[url['url']] = url['display_url']
+		r[url['url']] = url['expanded_url']
 	return r
 
 def trimUrl(url):
@@ -94,7 +94,7 @@ def formatContent(content, url_info):
 			content = content.replace(piece, telegraph_url)
 			continue
 		if len(real_url) < len(piece) + 10:
-			content = content.replace(piece, real_url)
+			content = content.replace(piece, trimUrl(real_url))
 			continue
 		content = content.replace(piece, trimUrl(piece))
 	return content
