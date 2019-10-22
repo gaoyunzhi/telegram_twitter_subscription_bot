@@ -8,11 +8,6 @@ import traceback as tb
 import json
 import tweepy
 import threading
-import time
-
-global twitterStream
-global twitterApi
-global record
 
 START_MESSAGE = ('Command: `/subscribe_twitter twitter_user_link`. If you do this inside group/channel, please '
 								 'add this bot as admin.')
@@ -68,6 +63,7 @@ def getKey(content):
 
 class TwitterListener(tweepy.StreamListener):
 	def on_data(self, data):
+		global record
 		try:
 			tweet_data = json.loads(data)
 			with open('tmp', 'w') as f:
@@ -80,12 +76,12 @@ class TwitterListener(tweepy.StreamListener):
 			chat_ids = getSubscribers(tuid)
 			if not chat_ids:
 				return
+			with open('tmp3', 'w') as f:
+				f.write(str(tweet_data))
 			content = getContent(tweet_data)
 			for chat_id in chat_ids:
 				key = str(chat_id) + getKey(content)
 				r = updater.bot.send_message(chat_id=chat_id, text=tweet_data['user']['name'] + ' | ' + content)
-				print('record')
-				print(record)
 				if key in record:
 					updater.bot.delete_message(chat_id=chat_id, message_id=record[key])
 				record[key] = r['message_id']
@@ -94,9 +90,13 @@ class TwitterListener(tweepy.StreamListener):
 			tb.print_exc()
 
 def twitterPush():
+	global twitterStream
+	global twitterApi
 	print('loading/reloading twitter subscription')
-	twitterStream.disconnect()
-	twitterStream.new_session()
+	if twitterStream:
+		twitterStream.disconnect()
+	twitterListener = TwitterListener()
+	twitterStream = tweepy.Stream(auth=twitterApi.auth, listener=twitterListener)
 	twitterStream.filter(follow=getTwitterSubscription())
 
 def updateSubInfo(msg, bot):
@@ -111,6 +111,7 @@ def updateSubInfo(msg, bot):
 		tb.print_exc()
 
 def getTwitterUser(link):
+	global twitterApi
 	screenname = [x for x in link.split('/') if x][-1]
 	user = twitterApi.get_user(screenname)
 	return str(user.id), '[' + user.name + '](twitter.com/' + str(user.screen_name) + ')'
@@ -166,8 +167,6 @@ dp.add_handler(MessageHandler(Filters.private, start))
 auth = tweepy.OAuthHandler(CREDENTIALS['twitter_consumer_key'], CREDENTIALS['twitter_consumer_secret'])
 auth.set_access_token(CREDENTIALS['twitter_access_token'], CREDENTIALS['twitter_access_secret'])
 twitterApi = tweepy.API(auth)
-twitterListener = TwitterListener()
-twitterStream = tweepy.Stream(auth=twitterApi.auth, listener=twitterListener)
 t = threading.Thread(target=twitterPush)
 t.start()
 
