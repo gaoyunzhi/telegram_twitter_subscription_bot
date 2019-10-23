@@ -48,11 +48,11 @@ def getSubscribers(tuid):
 
 def getContent(data):
 	if data.get('retweeted_status'):
-		main_data = data['retweeted_status']
-	text = main_data.get('extended_tweet', {}).get('full_text')
+		data = data['retweeted_status']
+	text = data.get('extended_tweet', {}).get('full_text')
 	if text:
 		return text
-	return main_data['text']
+	return data.get('text')
 
 def getUrlInfo(tweet_data):
 	r = {}
