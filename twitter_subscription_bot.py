@@ -133,8 +133,7 @@ class TwitterListener(tweepy.StreamListener):
 
 	def on_error(self, status_code):
 		print('on_error = ' + str(status_code))
-		if not self.running:
-			twitterRestart()
+		tb.print_exc()
 
 def twitterPush():
 	global twitterStream
@@ -217,7 +216,18 @@ dp.add_handler(MessageHandler(Filters.private, start))
 auth = tweepy.OAuthHandler(CREDENTIALS['twitter_consumer_key'], CREDENTIALS['twitter_consumer_secret'])
 auth.set_access_token(CREDENTIALS['twitter_access_token'], CREDENTIALS['twitter_access_secret'])
 twitterApi = tweepy.API(auth)
-twitterRestart()
+
+def twitterBackgroudRestart():
+	global twitterStream
+	try:
+		if not twitterStream or not twitterStream.running:
+			twitterRestart()
+	except Exception as e:
+		print(e)
+		tb.print_exc()
+	threading.Timer(10 * 60, twitterBackgroudRestart).start()
+
+twitterBackgroudRestart()
 
 updater.start_polling()
 updater.idle()

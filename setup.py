@@ -5,7 +5,7 @@ import json
 REQUIRED_KEYS = set(['bot_token', 'twitter_consumer_key', 'twitter_consumer_secret', 'twitter_access_token', 'twitter_access_secret'])
 
 def setup(arg = ''):
-	RUN_COMMAND = 'nohup python3 twitter_subscription_bot.py &'
+	RUN_COMMAND = 'nohup -u python3 twitter_subscription_bot.py &'
 
 	CREDENTIALS = {}
 	try:
@@ -31,7 +31,7 @@ def setup(arg = ''):
 	os.system("ps aux | grep python | grep twitter_subscription_bot | awk '{print $2}' | xargs kill -9")
 
 	if arg == 'debug':
-		os.system(RUN_COMMAND[6:-2])
+		os.system(RUN_COMMAND[9:-2])
 	else:
 		os.system(RUN_COMMAND)
 
