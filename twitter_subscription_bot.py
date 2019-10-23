@@ -131,6 +131,11 @@ class TwitterListener(tweepy.StreamListener):
 			print(e)
 			tb.print_exc()
 
+	def on_error(self, status_code):
+		print('on_error = ' + str(status_code))
+        if not self.running:
+        	twitterRestart()
+
 def twitterPush():
 	global twitterStream
 	global twitterApi
@@ -141,11 +146,14 @@ def twitterPush():
 	twitterStream = tweepy.Stream(auth=twitterApi.auth, listener=twitterListener)
 	twitterStream.filter(follow=getTwitterSubscription())
 
+def twitterRestart():
+	t = threading.Thread(target=twitterPush)
+	t.start()
+
 def updateSubInfo(msg, bot):
 	try:
 		saveSubscription()
-		t = threading.Thread(target=twitterPush)
-		t.start()
+		twitterRestart()
 		info = 'Twitter Subscription List: \n' +  '\n'.join(sorted(SUBSCRIPTION[str(msg.chat_id)].values()))
 		msg.reply_text(info, quote=False, parse_mode='Markdown', disable_web_page_preview=True)
 	except Exception as e:
@@ -209,8 +217,7 @@ dp.add_handler(MessageHandler(Filters.private, start))
 auth = tweepy.OAuthHandler(CREDENTIALS['twitter_consumer_key'], CREDENTIALS['twitter_consumer_secret'])
 auth.set_access_token(CREDENTIALS['twitter_access_token'], CREDENTIALS['twitter_access_secret'])
 twitterApi = tweepy.API(auth)
-t = threading.Thread(target=twitterPush)
-t.start()
+twitterRestart()
 
 updater.start_polling()
 updater.idle()
