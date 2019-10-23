@@ -69,34 +69,34 @@ def trimUrl(url):
 		return url
 	return url[url.find('://') + 3:]
 
-def isUrlPiece(piece):
-	return 'http' in piece or 't.co' in piece or '://' in piece
-
 def getKey(content, url_info):
-	for piece in content.split():
-		if isUrlPiece(piece) and piece in url_info:
-			return url_info[piece]
+	for url in url_info:
+		if url in content:
+			return url_info[url]
 	return content[:20]
 
+def replaceUrl(content, url, new_url):
+	x = content.find(url)
+	if x > 0 and content[x - 1] != ' ':
+		new_url = ' ' + new_url
+	return content.replace(url, new_url)
+
 def formatContent(content, url_info):
-	for piece in content.split():
-		if not isUrlPiece(piece):
+	for url in url_info:
+		if url not in content:
 			continue
-		if piece not in url_info:
-			content = content.replace(piece, '')
-			continue
-		real_url = url_info[piece]
+		real_url = url_info[url]
 		if 'photo' in real_url.split('/'):
-			content = content.replace(piece, '')
+			content = content.replace(url, '')
 			continue
 		telegraph_url = export_to_telegraph.export(real_url)
 		if telegraph_url:
-			content = content.replace(piece, telegraph_url)
+			content = replaceUrl(content, url, telegraph_url)
 			continue
-		if len(real_url) < len(piece) + 10:
-			content = content.replace(piece, trimUrl(real_url))
+		if len(real_url) < len(url) + 10:
+			content = replaceUrl(content, url, trimUrl(real_url))
 			continue
-		content = content.replace(piece, trimUrl(piece))
+		content = replaceUrl(content, url, trimUrl(url))
 	return content
 
 class TwitterListener(tweepy.StreamListener):
