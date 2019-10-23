@@ -133,8 +133,8 @@ class TwitterListener(tweepy.StreamListener):
 
 	def on_error(self, status_code):
 		print('on_error = ' + str(status_code))
-        if not self.running:
-        	twitterRestart()
+		if not self.running:
+			twitterRestart()
 
 def twitterPush():
 	global twitterStream
