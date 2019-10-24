@@ -24,8 +24,8 @@ def setup(arg = ''):
 		os.system('sudo python3 get-pip.py')
 		os.system('rm get-pip.py')
 
-		os.system('pip3 install -r requirements.txt')
-		os.system('pip3 install python-telegram-bot --upgrade') # need to use some experiement feature, e.g. message filtering
+		os.system('sudo pip3 install -r requirements.txt')
+		os.system('sudo pip3 install python-telegram-bot --upgrade') # need to use some experiement feature, e.g. message filtering
 			
 	# kill the old running bot if any. If you need two same bot running in one machine, use mannual command instead
 	os.system("ps aux | grep python | grep twitter_subscription_bot | awk '{print $2}' | xargs kill -9")
