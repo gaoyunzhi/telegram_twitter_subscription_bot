@@ -79,7 +79,7 @@ def replaceUrl(content, url, new_url):
 	x = content.find(url)
 	if x > 0 and content[x - 1] not in [' ', '\n']:
 		new_url = ' ' + new_url
-	if 'photo' in new_url.split():
+	if 'photo' in new_url.split('/'):
 		new_url = ''
 	return content.replace(url, new_url)
 
