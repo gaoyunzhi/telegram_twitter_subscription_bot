@@ -4,8 +4,8 @@ import sys
 def kill():
 	os.system("ps aux | grep python | grep twitter_subscription_bot | awk '{print $2}' | xargs kill -9")
 
-def setup(arg = ''):
-	if arg == 'kill':
+def setup(mode = ''):
+	if mode == 'kill':
 		kill()
 		return
 
@@ -25,7 +25,7 @@ def setup(arg = ''):
 	
 	kill()
 
-	if arg == 'debug':
+	if mode == 'debug':
 		os.system(RUN_COMMAND[6:-2])
 	else:
 		os.system(RUN_COMMAND)
