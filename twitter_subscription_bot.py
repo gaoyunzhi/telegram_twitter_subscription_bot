@@ -106,19 +106,13 @@ class TwitterListener(tweepy.StreamListener):
 		global record
 		try:
 			tweet_data = json.loads(data)
-			with open('tmp', 'w') as f:
-				f.write(str(tweet_data))
 			if tweet_data.get('in_reply_to_status_id_str') or not tweet_data.get('user') or \
 				tweet_data.get('quoted_status'):
 				return
-			with open('tmp2', 'w') as f:
-				f.write(str(tweet_data))
 			tuid = tweet_data['user']['id_str']
 			chat_ids = getSubscribers(tuid)
 			if not chat_ids:
 				return
-			with open('tmp3', 'w') as f:
-				f.write(str(tweet_data))
 			content = getContent(tweet_data)
 			url_info = getUrlInfo(tweet_data)
 			key_suffix = getKey(content, url_info)
