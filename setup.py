@@ -1,34 +1,29 @@
 import os
 import sys
-import json
 
-REQUIRED_KEYS = set(['bot_token', 'twitter_consumer_key', 'twitter_consumer_secret', 'twitter_access_token', 'twitter_access_secret'])
+def kill():
+	os.system("ps aux | grep python | grep twitter_subscription_bot | awk '{print $2}' | xargs kill -9")
 
 def setup(arg = ''):
+	if arg == 'kill':
+		kill()
+		return
+
 	RUN_COMMAND = 'nohup python3 -u twitter_subscription_bot.py &'
 
-	CREDENTIALS = {}
+	if mode != 'debug':
+		r = os.system('sudo pip3 install -r requirements.txt')
+		if r != 0:
+			os.system('curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py')
+			os.system('sudo python3 get-pip.py')
+			os.system('rm get-pip.py')
+			os.system('sudo pip3 install -r requirements.txt')
 	try:
-		with open('CREDENTIALS') as f:
-			CREDENTIALS = json.load(f)
+		from telegram.ext import Updater, MessageHandler, Filters
 	except:
-		pass
-
-	for key in REQUIRED_KEYS:
-		if key not in CREDENTIALS:
-			print('ERROR: please fill the CREDENTIALS file in json format, required keys : ' + ', '.join(sorted(REQUIRED_KEYS)))
-			return
-
-	if arg != 'reload' and arg != 'debug':
-		os.system('curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py')
-		os.system('sudo python3 get-pip.py')
-		os.system('rm get-pip.py')
-
-		os.system('sudo pip3 install -r requirements.txt')
 		os.system('sudo pip3 install python-telegram-bot --upgrade') # need to use some experiement feature, e.g. message filtering
-			
-	# kill the old running bot if any. If you need two same bot running in one machine, use mannual command instead
-	os.system("ps aux | grep python | grep twitter_subscription_bot | awk '{print $2}' | xargs kill -9")
+	
+	kill()
 
 	if arg == 'debug':
 		os.system(RUN_COMMAND[6:-2])
