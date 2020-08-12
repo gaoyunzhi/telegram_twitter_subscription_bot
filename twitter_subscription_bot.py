@@ -9,6 +9,7 @@ import json
 import tweepy
 import threading
 import export_to_telegraph
+from telegram_util import splitCommand
 
 START_MESSAGE = ('Command: `/subscribe_twitter twitter_user_link`. If you do this inside group/channel, please '
 								 'add this bot as admin.')
@@ -162,19 +163,15 @@ def getTwitterUser(link):
 	return str(user.id), '[' + user.name + '](twitter.com/' + str(user.screen_name) + ')'
 
 def manageImp(msg, bot):
-	if len(msg.text.split()) != 2:
-		msg.reply_text(START_MESSAGE, quote=False)
-		return
-	command, link = msg.text.split()
-	if not 'subscribe' in command:
-		msg.reply_text(START_MESSAGE, quote=False)
+	command, link = splitCommand(msg.text)
+	if 'sub' not in command or not link:
 		return
 	tuid, desc = getTwitterUser(link)
 	if not tuid:
 		return
 	SUBSCRIPTION[str(msg.chat_id)] = SUBSCRIPTION.get(str(msg.chat_id), {})
 	subs = SUBSCRIPTION[str(msg.chat_id)]
-	if 'unsubscribe' in command:
+	if 'unsub' in command:
 		if not subs or tuid not in subs:
 			return msg.reply_text('FAIL. No such subscription', quote=False)
 		del subs[tuid]
