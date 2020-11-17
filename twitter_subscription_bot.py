@@ -203,17 +203,6 @@ def start(update, context):
 updater = Updater(CREDENTIALS['bot_token'], use_context=True)
 dp = updater.dispatcher
 
-for chat_id in list(SUBSCRIPTION.keys()):
-	try:
-		r = updater.bot.send_message(chat_id=chat_id, text='test')
-	except Exception as e:
-		del SUBSCRIPTION[chat_id]
-	try:
-		r.delete()
-	except:
-		...
-saveSubscription()
-
 dp.add_handler(MessageHandler(Filters.command, manage))
 dp.add_handler(MessageHandler(Filters.private, start))
 
