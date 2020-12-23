@@ -120,7 +120,10 @@ class TwitterListener(tweepy.StreamListener):
 			content = tweet_data['user']['name'] + ' | ' + formatContent(content, url_info)
 			for chat_id in chat_ids:
 				key = str(chat_id) + key_suffix
-				r = updater.bot.send_message(chat_id=chat_id, text=content)
+				try:
+					r = updater.bot.send_message(chat_id=chat_id, text=content)
+				except Exception as e:
+					print('twitter_subscription_bot send fail', chat_id, str(e))
 				if key in record:
 					updater.bot.delete_message(chat_id=chat_id, message_id=record[key])
 				record[key] = r['message_id']
